@@ -20,16 +20,19 @@ def parse_command_line_arguments():
 
 
 def main():
-    args = parse_command_line_arguments()
+    try:
+        args = parse_command_line_arguments()
 
-    image_download(args.keyword, 50, args.image_storage_path)
+        image_download(args.keyword, 50, args.image_storage_path)
 
-    create_csv(args.image_storage_path, args.csv_file_path)
+        create_csv(args.image_storage_path, args.csv_file_path)
 
-    pig_iterator = PigsIterator(args.csv_file_path)
+        pig_iterator = PigsIterator(args.csv_file_path)
 
-    for pig_image in pig_iterator:
-        print(pig_image)
+        for pig_image in pig_iterator:
+            print(pig_image)
+    except Exception as exc:
+        print(f"error:{exc}")
 
 
 if __name__ == "__main__":
