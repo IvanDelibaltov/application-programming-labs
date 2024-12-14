@@ -1,114 +1,29 @@
-#import pandas as pd
-import cv2
-import os
-import matplotlib.pyplot as plt
 import argparse
-import pandas as pd
 
+from image_analysis import read_image_paths, add_image_dimensions, compute_statistics, filter_images, add_area_column, \
+    plot_area_distribution, create_csv
 
-def get_image_dimensions(image_path: str) -> tuple:
-    """
-    Функция для получения размеров изображения.
-    :param image_path: Путь к изображению для чтения.
-    :return: tuple (высота, ширина, количество каналов)
-    """
-    try:
-        img = cv2.imread(image_path)
-        if img is not None:
-            height, width, depth = img.shape
-            return height, width, depth
-        else:
-            raise ValueError(f"Не удалось открыть изображение -> {image_path}")
-    except Exception as e:
-        print(f"Ошибка при обработке изображения -> {image_path}: {e}")
-        return None, None, None
-
-def read_image_paths(root_dir: str) -> pd.DataFrame:
-    """
-    Функция для получения путей к изображениям в директории.
-    :param root_dir: Директория с изображениями
-    :return: DataFrame с абсолютными и относительными путями к изображениям
-    """
-    absolute_paths = []
-    relative_paths = []
-
-    for root, dirs, files in os.walk(root_dir):
-        for file in files:
-            if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                absolute_path = os.path.join(root, file)
-                relative_path = os.path.relpath(absolute_path, root_dir)
-                absolute_paths.append(absolute_path)
-                relative_paths.append(relative_path)
-
-    df = pd.DataFrame({
-        'absolute_path': absolute_paths,
-        'relative_path': relative_paths
-    })
-    return df
-
-def add_image_dimensions(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Добавляет размеры изображений в DataFrame.
-    :param df: DataFrame с путями к изображениям
-    :return: DataFrame с размерами изображений
-    """
-    df[['height', 'width', 'depth']] = df['absolute_path'].apply(get_image_dimensions).apply(pd.Series)
-    df.dropna(inplace=True)
-    return df
-
-def compute_statistics(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Вычисляет статистику по столбцам 'height', 'width', 'depth'.
-    :param df: DataFrame с размерами изображений
-    :return: Статистическая информация
-    """
-    return df[['height', 'width', 'depth']].describe()
-
-def filter_images(df: pd.DataFrame, max_width: int, max_height: int) -> pd.DataFrame:
-    """
-    Фильтрует изображения по максимальной ширине и высоте.
-    :param df: DataFrame с размерами изображений
-    :param max_width: Максимальная ширина
-    :param max_height: Максимальная высота
-    :return: Отфильтрованный DataFrame
-    """
-    return df[(df['width'] <= max_width) & (df['height'] <= max_height)]
-
-def add_area_column(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Добавляет столбец 'area' с площадью изображения.
-    :param df: DataFrame с размерами изображений
-    :return: DataFrame с добавленным столбцом 'area'
-    """
-    df['area'] = df['height'] * df['width']
-    return df
-
-def plot_area_distribution(df: pd.DataFrame) -> None:
-    """
-    Строит гистограмму распределения площадей изображений.
-    :param df: DataFrame с данными изображений, включая площади
-    """
-    plt.figure(figsize=(10, 6))
-    plt.hist(df['area'], bins=30, color='blue', alpha=0.7)
-    plt.title('Распределение площадей изображений')
-    plt.xlabel('Площадь (пиксели)')
-    plt.ylabel('Частота')
-    plt.grid(axis='y', alpha=0.75)
-    plt.show()
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Анализ изображений в директории.')
     parser.add_argument('root_dir', type=str, help='Путь к корневой директории с изображениями')
+    parser.add_argument('path_csv', type=str, help='Путь к выводу csv')
     parser.add_argument('--max_width', type=int, default=1920, help='Максимальная ширина для фильтра')
     parser.add_argument('--max_height', type=int, default=1080, help='Максимальная высота для фильтра')
     args = parser.parse_args()
 
     try:
 
-        df = read_image_paths(args.root_dir)
+        create_csv(args.root_dir, args.path_csv)
 
+
+        df = read_image_paths(args.path_csv)
+        print("Неотфильтрованный DataFrame:\n", df)
 
         df = add_image_dimensions(df)
+
+
+        print("Первые 5 строк неотфильтрованного DataFrame:\n", df.head())
 
 
         stats = compute_statistics(df)
@@ -131,5 +46,7 @@ def main() -> None:
     except Exception as e:
         print(f"Произошла ошибка -> {e}")
 
-if __name__ == "__main__":
+
+
+if name == "main":
     main()
